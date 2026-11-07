@@ -1,0 +1,6 @@
+@ExpressionVisualizer_HostAddress = http://localhost:5015
+
+GET {{ExpressionVisualizer_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###
