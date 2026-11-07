@@ -5,7 +5,9 @@ import {
   Controls,
   MiniMap,
   useNodesState,
-  useEdgesState
+  useEdgesState,
+  type Node,
+  type Edge
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import { PanelRightClose, PanelRightOpen, Keyboard } from 'lucide-react';
@@ -16,7 +18,7 @@ import { TracePlayer } from './components/TracePlayer';
 import { InspectorPanel } from './components/InspectorPanel';
 import { CustomNode } from './components/CustomNode';
 
-import type { ParseResponse, ExampleExpression } from './types';
+import type { ParseResponse, ExampleExpression, FlowNodeData } from './types';
 
 const nodeTypes = {
   customNode: CustomNode
@@ -39,16 +41,8 @@ export const App: React.FC = () => {
   const [playSpeed, setPlaySpeed] = useState<number>(900);
 
   // React Flow states
-  const [nodes, setNodes, onNodesChange] = useNodesState<any>([]);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<any>([]);
-
-  // Fetch examples on mount
-  useEffect(() => {
-    fetch('/api/parser/examples')
-      .then((res) => res.json())
-      .then((data: ExampleExpression[]) => setExamples(data))
-      .catch((err) => console.error('Error fetching examples:', err));
-  }, []);
+  const [nodes, setNodes, onNodesChange] = useNodesState<Node<FlowNodeData>>([]);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<Edge>([]);
 
   // Parse handler
   const handleParse = useCallback(async (expr = expression, algo = algorithm) => {
@@ -73,19 +67,25 @@ export const App: React.FC = () => {
 
       setParseResponse(data);
       setCurrentStepIndex(0);
-    } catch (err: any) {
-      setError(err.message || 'Không thể kết nối đến máy chủ C# API');
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ C# API';
+      setError(msg);
     } finally {
       setLoading(false);
     }
   }, [expression, algorithm]);
 
-  // Initial parse on first render
+  // Fetch examples & do initial parse on mount
   useEffect(() => {
-    handleParse();
-  }, []);
+    fetch('/api/parser/examples')
+      .then((res) => res.json())
+      .then((data: ExampleExpression[]) => setExamples(data))
+      .catch((err) => console.error('Error fetching examples:', err));
 
-  // Keyboard navigation shortcuts
+    handleParse('2 * 3 + 6', 'v1');
+  }, [handleParse]);
+
+  // Global Keyboard shortcuts
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
@@ -135,7 +135,7 @@ export const App: React.FC = () => {
     if (!currentStep) return;
 
     // Filter visible nodes and update states
-    const updatedNodes = parseResponse.nodes
+    const updatedNodes: Node<FlowNodeData>[] = parseResponse.nodes
       .filter((n) => currentStep.visibleNodeIds.includes(n.id))
       .map((n) => {
         const status = currentStep.nodeStatuses[n.id] || 'idle';
@@ -143,7 +143,9 @@ export const App: React.FC = () => {
         const isCurrent = n.id === currentStep.activeNodeId;
 
         return {
-          ...n,
+          id: n.id,
+          type: n.type,
+          position: n.position,
           data: {
             ...n.data,
             status,
@@ -153,13 +155,15 @@ export const App: React.FC = () => {
         };
       });
 
-    // Filter visible edges
-    const updatedEdges = parseResponse.edges
+    // Lexipit Black Hand-cut Graph Edges
+    const updatedEdges: Edge[] = parseResponse.edges
       .filter((e) => currentStep.visibleEdgeIds.includes(e.id))
       .map((e) => ({
-        ...e,
+        id: e.id,
+        source: e.source,
+        target: e.target,
         style: {
-          stroke: '#94a3b8',
+          stroke: '#000000',
           strokeWidth: 2
         }
       }));
@@ -170,7 +174,7 @@ export const App: React.FC = () => {
 
   // Auto-play effect
   useEffect(() => {
-    let timer: any = null;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     if (isPlaying && parseResponse) {
       if (currentStepIndex >= parseResponse.steps.length - 1) {
         setIsPlaying(false);
@@ -194,8 +198,15 @@ export const App: React.FC = () => {
   const currentStep = parseResponse?.steps[currentStepIndex];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', width: '100vw', overflow: 'hidden', fontFamily: 'system-ui, -apple-system, sans-serif' }}>
-      {/* 1. Header */}
+    <div style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      width: '100vw',
+      overflow: 'hidden',
+      backgroundColor: '#dceeff' // Lexipit Sky Wash Pastel Paper
+    }}>
+      {/* 1. Header with Full-bleed Marquee */}
       <Header />
 
       {/* 2. Control Bar */}
@@ -214,8 +225,8 @@ export const App: React.FC = () => {
 
       {/* 3. Main Workspace: Canvas + Inspector */}
       <div style={{ display: 'flex', flex: '1', overflow: 'hidden', position: 'relative' }}>
-        {/* React Flow Canvas */}
-        <main style={{ flex: '1', height: '100%', backgroundColor: '#f1f5f9', position: 'relative' }}>
+        {/* React Flow Canvas (Sky Wash Pastel Ground) */}
+        <main style={{ flex: '1', height: '100%', backgroundColor: '#dceeff', position: 'relative' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -226,72 +237,90 @@ export const App: React.FC = () => {
             minZoom={0.2}
             maxZoom={2}
           >
-            <Background gap={16} size={1} color="#cbd5e1" />
-            <Controls />
-            <MiniMap
-              nodeColor={(node: any) => {
-                if (node.data?.status === 'active') return '#f59e0b';
-                if (node.data?.status === 'completed') return '#10b981';
-                return '#94a3b8';
+            {/* Lexipit Paper Grid */}
+            <Background gap={20} size={1.5} color="#cccccc" />
+            <Controls
+              style={{
+                borderRadius: '1600px',
+                border: '1.5px solid #000000',
+                overflow: 'hidden'
               }}
-              style={{ borderRadius: '8px', border: '1px solid #cbd5e1' }}
+            />
+            <MiniMap
+              nodeColor={(node) => {
+                const nodeData = node.data as unknown as FlowNodeData | undefined;
+                if (nodeData?.status === 'active') return '#ffd731'; // Sunburst
+                if (nodeData?.status === 'completed') return '#55db9c'; // Mint Pop
+                return '#000000';
+              }}
+              style={{
+                borderRadius: '20px',
+                border: '2px solid #000000',
+                backgroundColor: '#ffffff'
+              }}
             />
           </ReactFlow>
 
-          {/* Quick Shortcuts Pill */}
+          {/* Lexipit Floating Shortcuts Pill Sticker */}
           <div style={{
             position: 'absolute',
-            bottom: '12px',
-            left: '12px',
-            backgroundColor: 'rgba(255, 255, 255, 0.88)',
-            backdropFilter: 'blur(6px)',
-            border: '1px solid #cbd5e1',
-            borderRadius: '20px',
-            padding: '5px 12px',
+            bottom: '16px',
+            left: '16px',
+            backgroundColor: '#ffffff',
+            border: '1.5px solid #000000',
+            borderRadius: '1600px',
+            padding: '6px 14px',
             fontSize: '11px',
-            fontWeight: 500,
-            color: '#475569',
+            fontWeight: 700,
+            color: '#000000',
             display: 'flex',
             alignItems: 'center',
             gap: '6px',
-            boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
             pointerEvents: 'none'
           }}>
-            <Keyboard size={13} color="#2563eb" />
-            <span>Phím tắt: <strong>Space</strong> (Chạy/Dừng), <strong>← / →</strong> (Lùi/Tiến), <strong>Home/End</strong></span>
+            <Keyboard size={14} color="#000000" />
+            <span>PHÍM TẮT: <strong>SPACE</strong> (CHẠY/DỪNG) • <strong>← / →</strong> (LÙI/TIẾN) • <strong>HOME/END</strong></span>
           </div>
 
-          {/* Inspector Panel Toggle Button */}
+          {/* Lexipit Outlined Toggle Button */}
           <button
             type="button"
             onClick={() => setIsInspectorOpen((prev) => !prev)}
-            title={isInspectorOpen ? 'Thu gọn bảng thanh tra' : 'Mở rộng bảng thanh tra'}
-            aria-label={isInspectorOpen ? 'Thu gọn bảng thanh tra' : 'Mở rộng bảng thanh tra'}
+            title={isInspectorOpen ? 'Thu gọn bảng chi tiết' : 'Mở rộng bảng chi tiết'}
+            aria-label={isInspectorOpen ? 'Thu gọn bảng chi tiết' : 'Mở rộng bảng chi tiết'}
             style={{
               position: 'absolute',
-              top: '12px',
-              right: '12px',
+              top: '16px',
+              right: '16px',
               backgroundColor: '#ffffff',
-              border: '1px solid #cbd5e1',
-              borderRadius: '8px',
-              padding: '8px 12px',
+              border: '1.5px solid #000000',
+              borderRadius: '1600px',
+              padding: '8px 16px',
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
               cursor: 'pointer',
               fontSize: '12px',
-              fontWeight: 600,
-              color: '#334155',
-              boxShadow: '0 2px 5px rgba(0,0,0,0.06)',
-              zIndex: 10
+              fontWeight: 800,
+              letterSpacing: '0.030em',
+              textTransform: 'uppercase',
+              color: '#000000',
+              zIndex: 10,
+              transition: 'background-color 0.15s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#dceeff';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#ffffff';
             }}
           >
             {isInspectorOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
-            <span>{isInspectorOpen ? 'Ẩn bảng chi tiết' : 'Hiện bảng chi tiết'}</span>
+            <span>{isInspectorOpen ? 'ẨN BẢNG' : 'HIỆN BẢNG'}</span>
           </button>
         </main>
 
-        {/* Right Inspector Panel (Collapsible) */}
+        {/* Right Inspector Panel */}
         {isInspectorOpen && (
           <InspectorPanel
             expression={parseResponse?.cleanExpression || expression}
@@ -300,7 +329,7 @@ export const App: React.FC = () => {
         )}
       </div>
 
-      {/* 4. Bottom Trace Player */}
+      {/* 4. Bottom Lexipit Trace Player */}
       <TracePlayer
         currentStepIndex={currentStepIndex}
         totalSteps={parseResponse?.totalSteps || 0}

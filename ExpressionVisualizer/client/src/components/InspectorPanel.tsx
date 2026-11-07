@@ -15,78 +15,87 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({ expression, step
         style={{
           padding: '24px',
           backgroundColor: '#ffffff',
-          borderLeft: '1px solid #e2e8f0',
+          borderLeft: '2px solid #000000',
           width: '360px',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: '#64748b',
+          color: '#000000',
           fontSize: '14px',
+          fontWeight: 600,
           textAlign: 'center'
         }}
       >
-        Chưa có dữ liệu phân tích. Hãy nhập biểu thức và bấm "Phân tích cú pháp".
+        Chưa có dữ liệu phân tích. Hãy nhập biểu thức và bấm "PHÂN TÍCH".
       </aside>
     );
   }
 
-  const getActionFriendlyName = (action: string) => {
+  // Lexipit Action Badge Color Map
+  const getActionBadge = (action: string) => {
     switch (action) {
       case 'CALL':
-        return 'Gọi hàm đệ quy';
+        return { label: 'GỌI HÀM ĐỆ QUY', bg: '#4da2ff', text: '#000000' }; // Electric Blue
       case 'TOKEN':
-        return 'Khớp ký hiệu';
+        return { label: 'KHỚP KÝ HIỆU', bg: '#ffd731', text: '#000000' }; // Sunburst
       case 'READ':
-        return 'Đọc số hạng';
+        return { label: 'ĐỌC SỐ HẠNG', bg: '#55db9c', text: '#000000' }; // Mint Pop
       case 'COMPUTE':
-        return 'Thực hiện phép tính';
+        return { label: 'TÍNH TOÁN', bg: '#e9ccff', text: '#000000' }; // Lavender
       case 'RETURN':
-        return 'Trả về kết quả';
+        return { label: 'TRẢ KẾT QUẢ', bg: '#5c4ade', text: '#ffffff' }; // Voltage Violet
       case 'COMPLETE':
-        return 'Hoàn tất thành công';
+        return { label: 'HOÀN THÀNH', bg: '#55db9c', text: '#000000' }; // Mint Pop
       case 'ERROR':
-        return 'Lỗi cú pháp';
+        return { label: 'LỖI CÚ PHÁP', bg: '#fb4903', text: '#ffffff' }; // Ember
       default:
-        return action;
+        return { label: action, bg: '#e9e9e9', text: '#000000' };
     }
   };
+
+  const actionBadge = getActionBadge(step.actionType);
 
   return (
     <aside
       aria-label="Bảng theo dõi trạng thái phân giải"
       style={{
-        width: '360px',
-        backgroundColor: '#f8fafc',
-        borderLeft: '1px solid #e2e8f0',
+        width: '370px',
+        backgroundColor: '#ffffff',
+        borderLeft: '2px solid #000000',
         display: 'flex',
         flexDirection: 'column',
-        overflowY: 'auto'
+        overflowY: 'auto',
+        gap: '14px',
+        padding: '16px'
       }}
     >
-      {/* 1. Expression Position Viewer */}
+      {/* 1. Expression Position Viewer Card */}
       <section
-        aria-labelledby="section-pointer-title"
-        style={{ padding: '16px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}
+        style={{
+          backgroundColor: '#dceeff', // Sky Wash pastel ground
+          border: '1.5px solid #000000',
+          borderRadius: '20px',
+          padding: '14px'
+        }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <div id="section-pointer-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', color: '#1e293b', fontWeight: 700, fontSize: '13px' }}>
-            <Terminal size={16} color="#2563eb" />
-            <span>Vị trí con trỏ đọc chuỗi (currentPos = {step.currentPos})</span>
-          </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', color: '#000000', fontWeight: 800, fontSize: '13px', textTransform: 'uppercase' }}>
+          <Terminal size={16} color="#000000" />
+          <span>CON TRỎ DUYỆT CHUỖI (POS = {step.currentPos})</span>
         </div>
 
-        <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#64748b', lineHeight: '1.4' }}>
-          Ký tự được đóng khung vàng là vị trí con trỏ đang trỏ tới trong chuỗi nguồn:
+        <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#000000', fontWeight: 500 }}>
+          Ký tự ô vàng là vị trí con trỏ đang đọc:
         </p>
 
+        {/* Character Sticker Boxes */}
         <div
           role="region"
           aria-label="Băng hiển thị chuỗi ký tự"
           style={{
             display: 'flex',
-            gap: '4px',
+            gap: '5px',
             overflowX: 'auto',
-            padding: '8px 4px 10px 4px',
+            padding: '4px 2px 8px 2px',
             fontFamily: 'monospace',
             fontSize: '15px'
           }}
@@ -101,28 +110,29 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({ expression, step
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  minWidth: '24px'
+                  minWidth: '26px'
                 }}
               >
                 <div
                   aria-current={isCurrent ? 'true' : undefined}
                   style={{
-                    width: '26px',
-                    height: '32px',
+                    width: '28px',
+                    height: '34px',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderRadius: '6px',
-                    fontWeight: isCurrent ? 800 : 500,
-                    backgroundColor: isCurrent ? '#fef08a' : isPassed ? '#f1f5f9' : '#ffffff',
-                    border: isCurrent ? '2px solid #ca8a04' : '1px solid #cbd5e1',
-                    color: isCurrent ? '#854d0e' : '#1e293b',
-                    boxShadow: isCurrent ? '0 0 8px rgba(202, 138, 4, 0.4)' : 'none'
+                    borderRadius: '8px',
+                    fontWeight: 900,
+                    backgroundColor: isCurrent ? '#ffd731' : isPassed ? '#e9e9e9' : '#ffffff', // Sunburst vs Soft Mist vs Paper
+                    border: isCurrent ? '2px solid #000000' : '1.5px solid #000000',
+                    color: '#000000',
+                    transform: isCurrent ? 'scale(1.08)' : 'scale(1)',
+                    transition: 'transform 0.15s ease'
                   }}
                 >
                   {char === ' ' ? '␣' : char}
                 </div>
-                <span style={{ fontSize: '11px', fontWeight: 600, color: isCurrent ? '#a16207' : '#64748b', marginTop: '2px' }}>
+                <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000', marginTop: '2px' }}>
                   {index}
                 </span>
               </div>
@@ -133,99 +143,102 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({ expression, step
               display: 'flex',
               flexDirection: 'column',
               alignItems: 'center',
-              minWidth: '36px'
+              minWidth: '40px'
             }}>
               <div
                 aria-current="true"
                 style={{
-                  padding: '2px 6px',
-                  height: '32px',
+                  padding: '2px 8px',
+                  height: '34px',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
-                  borderRadius: '6px',
-                  fontWeight: 800,
-                  backgroundColor: '#dcfce7',
-                  border: '2px solid #16a34a',
-                  color: '#15803d',
-                  fontSize: '11px'
+                  borderRadius: '8px',
+                  fontWeight: 900,
+                  backgroundColor: '#55db9c', // Mint Pop
+                  border: '2px solid #000000',
+                  color: '#000000',
+                  fontSize: '11px',
+                  letterSpacing: '0.02em',
+                  textTransform: 'uppercase'
                 }}
               >
-                Hết chuỗi
+                EOF
               </div>
-              <span style={{ fontSize: '11px', fontWeight: 600, color: '#16a34a', marginTop: '2px' }}>{expression.length}</span>
+              <span style={{ fontSize: '11px', fontWeight: 700, color: '#000000', marginTop: '2px' }}>{expression.length}</span>
             </div>
           )}
         </div>
       </section>
 
-      {/* 2. Step Description & Action Badge */}
+      {/* 2. Step Description & Action Badge Card */}
       <section
-        aria-labelledby="section-action-title"
-        style={{ padding: '16px', borderBottom: '1px solid #e2e8f0', backgroundColor: '#ffffff' }}
+        style={{
+          backgroundColor: '#ffffff',
+          border: '1.5px solid #000000',
+          borderRadius: '20px',
+          padding: '14px'
+        }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
-          <span id="section-action-title" style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', color: '#475569', letterSpacing: '0.04em' }}>
-            Hành động giải thuật
+          <span style={{ fontSize: '12px', fontWeight: 900, textTransform: 'uppercase', color: '#000000', letterSpacing: '0.03em' }}>
+            HÀNH ĐỘNG GIẢI THUẬT
           </span>
+
+          {/* Lexipit Action Sticker Pill */}
           <span
             style={{
               fontSize: '11px',
-              fontWeight: 700,
-              padding: '3px 9px',
-              borderRadius: '12px',
-              backgroundColor:
-                step.actionType === 'CALL' ? '#dbeafe' :
-                step.actionType === 'TOKEN' ? '#fef3c7' :
-                step.actionType === 'READ' ? '#d1fae5' :
-                step.actionType === 'COMPUTE' ? '#dcfce7' :
-                step.actionType === 'RETURN' ? '#ede9fe' :
-                step.actionType === 'ERROR' ? '#fee2e2' : '#f1f5f9',
-              color:
-                step.actionType === 'CALL' ? '#1d4ed8' :
-                step.actionType === 'TOKEN' ? '#b45309' :
-                step.actionType === 'READ' ? '#065f46' :
-                step.actionType === 'COMPUTE' ? '#15803d' :
-                step.actionType === 'RETURN' ? '#5b21b6' :
-                step.actionType === 'ERROR' ? '#b91c1c' : '#334155'
+              fontWeight: 800,
+              padding: '3px 10px',
+              borderRadius: '1600px',
+              border: '1.5px solid #000000',
+              backgroundColor: actionBadge.bg,
+              color: actionBadge.text,
+              letterSpacing: '0.032em',
+              textTransform: 'uppercase'
             }}
           >
-            {getActionFriendlyName(step.actionType)}
+            {actionBadge.label}
           </span>
         </div>
+
         <div
           role="status"
           aria-live="polite"
           style={{
-            backgroundColor: '#f8fafc',
-            border: '1px solid #e2e8f0',
-            borderRadius: '8px',
-            padding: '12px 14px',
+            backgroundColor: '#e9e9e9', // Soft Mist
+            border: '1px solid #000000',
+            borderRadius: '12px',
+            padding: '10px 12px',
             fontSize: '13px',
-            lineHeight: '1.55',
-            color: '#0f172a'
+            fontWeight: 600,
+            lineHeight: '1.5',
+            color: '#000000'
           }}
         >
           {step.description}
         </div>
       </section>
 
-      {/* 3. Call Stack Visualizer */}
+      {/* 3. Call Stack Visualizer Card */}
       <section
-        aria-labelledby="section-stack-title"
-        style={{ padding: '16px', borderBottom: '1px solid #e2e8f0', flex: '1' }}
+        style={{
+          backgroundColor: '#ffffff',
+          border: '1.5px solid #000000',
+          borderRadius: '20px',
+          padding: '14px',
+          flex: '1'
+        }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#1e293b', fontWeight: 700, fontSize: '13px' }}>
-          <Layers size={16} color="#7c3aed" />
-          <span id="section-stack-title">Ngăn xếp đệ quy (Call Stack)</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#000000', fontWeight: 800, fontSize: '13px', textTransform: 'uppercase' }}>
+          <Layers size={16} color="#000000" />
+          <span>NGĂN XẾP ĐỆ QUY (CALL STACK)</span>
         </div>
-        <p style={{ margin: '0 0 10px 0', fontSize: '12px', color: '#64748b', lineHeight: '1.4' }}>
-          Hiển thị các hàm đệ quy đang lồng nhau. Hàm trên đỉnh (TOP) là hàm đang nắm quyền xử lý:
-        </p>
 
         {step.callStack.length === 0 ? (
-          <div style={{ fontSize: '13px', color: '#64748b', fontStyle: 'italic', padding: '10px', backgroundColor: '#ffffff', borderRadius: '6px', border: '1px dashed #cbd5e1' }}>
-            Ngăn xếp rỗng (đã hoàn thành hoặc chưa bắt đầu)
+          <div style={{ fontSize: '13px', color: '#000000', fontStyle: 'italic', padding: '10px', backgroundColor: '#e9e9e9', borderRadius: '12px', border: '1px dashed #000000' }}>
+            Ngăn xếp rỗng
           </div>
         ) : (
           <div
@@ -241,23 +254,30 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({ expression, step
                   role="listitem"
                   style={{
                     padding: '8px 12px',
-                    borderRadius: '6px',
+                    borderRadius: '1600px', // Lexipit pill
                     fontFamily: 'monospace',
-                    fontSize: '12px',
-                    fontWeight: isTop ? 700 : 500,
-                    backgroundColor: isTop ? '#ede9fe' : '#ffffff',
-                    border: isTop ? '1px solid #8b5cf6' : '1px solid #cbd5e1',
-                    color: isTop ? '#5b21b6' : '#334155',
+                    fontSize: '13px',
+                    fontWeight: isTop ? 800 : 600,
+                    backgroundColor: isTop ? '#5c4ade' : '#ffffff', // Voltage Violet for top
+                    border: '1.5px solid #000000',
+                    color: isTop ? '#ffffff' : '#000000',
                     display: 'flex',
                     alignItems: 'center',
-                    justifyContent: 'space-between',
-                    boxShadow: isTop ? '0 1px 4px rgba(139, 92, 246, 0.2)' : 'none'
+                    justifyContent: 'space-between'
                   }}
                 >
                   <span>{fn}</span>
                   {isTop && (
-                    <span style={{ fontSize: '10px', backgroundColor: '#7c3aed', color: '#ffffff', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                      ĐANG XỬ LÝ
+                    <span style={{
+                      fontSize: '10px',
+                      backgroundColor: '#ffd731', // Sunburst badge
+                      color: '#000000',
+                      padding: '2px 8px',
+                      borderRadius: '1600px',
+                      border: '1px solid #000000',
+                      fontWeight: 900
+                    }}>
+                      TOP
                     </span>
                   )}
                 </div>
@@ -267,31 +287,40 @@ export const InspectorPanel: React.FC<InspectorPanelProps> = ({ expression, step
         )}
       </section>
 
-      {/* 4. Symbol Legend without Emojis (Semantic badges) */}
+      {/* 4. Lexipit Sticker Legend Card */}
       <section
-        aria-labelledby="section-legend-title"
-        style={{ padding: '14px 16px', backgroundColor: '#ffffff', borderTop: '1px solid #e2e8f0', fontSize: '12px' }}
+        style={{
+          backgroundColor: '#e9ccff', // Lavender pastel surface
+          border: '1.5px solid #000000',
+          borderRadius: '20px',
+          padding: '12px 14px',
+          fontSize: '12px'
+        }}
       >
-        <div id="section-legend-title" style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '10px', color: '#334155', fontWeight: 700 }}>
-          <Info size={15} color="#2563eb" />
-          <span>Ý nghĩa các ký hiệu cú pháp trên cây:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px', color: '#000000', fontWeight: 900, textTransform: 'uppercase' }}>
+          <Info size={15} color="#000000" />
+          <span>CHÚ GIẢI KÝ HIỆU CÂY:</span>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px', color: '#334155' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '6px', color: '#000000', fontWeight: 700 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#3b82f6' }}></span>
-            <span><strong>E</strong>: Biểu thức (Cộng/Trừ)</span>
+            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '1600px', backgroundColor: '#4da2ff', border: '1px solid #000000' }}></span>
+            <span>E: Biểu thức</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#8b5cf6' }}></span>
-            <span><strong>T</strong>: Số hạng (Nhân/Chia)</span>
+            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '1600px', backgroundColor: '#5c4ade', border: '1px solid #000000' }}></span>
+            <span>T: Số hạng</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#f59e0b' }}></span>
-            <span><strong>F</strong>: Thừa số (Ngoặc / id)</span>
+            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '1600px', backgroundColor: '#ffd731', border: '1px solid #000000' }}></span>
+            <span>F: Thừa số</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '3px', backgroundColor: '#10b981' }}></span>
-            <span><strong>id</strong>: Giá trị số cụ thể</span>
+            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '1600px', backgroundColor: '#55db9c', border: '1px solid #000000' }}></span>
+            <span>ID: Giá trị số</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ display: 'inline-block', width: '12px', height: '12px', borderRadius: '1600px', backgroundColor: '#fb4903', border: '1px solid #000000' }}></span>
+            <span>OP: Toán tử</span>
           </div>
         </div>
       </section>

@@ -1,4 +1,4 @@
-export interface FlowNodeData {
+export interface FlowNodeData extends Record<string, unknown> {
   label: string;
   nodeType: 'Expression' | 'Term' | 'Factor' | 'Number' | 'Operator' | 'Parenthesis' | string;
   value?: number | null;

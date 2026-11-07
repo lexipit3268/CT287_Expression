@@ -9,74 +9,125 @@ interface CustomNodeProps {
 export const CustomNodeComponent: React.FC<CustomNodeProps> = ({ data }) => {
   const { label, nodeType, value, status, isCurrent } = data;
 
+  // Lexipit 6-Color Sticker Palette Mapping
+  const getNodeColor = () => {
+    switch (nodeType) {
+      case 'Expression':
+        return { bg: '#4da2ff', text: '#000000', tagBg: '#ffffff', tagText: '#000000' }; // Electric Blue
+      case 'Term':
+        return { bg: '#5c4ade', text: '#ffffff', tagBg: '#e9ccff', tagText: '#000000' }; // Voltage Violet
+      case 'Factor':
+        return { bg: '#ffd731', text: '#000000', tagBg: '#ffffff', tagText: '#000000' }; // Sunburst
+      case 'Operator':
+        return { bg: '#fb4903', text: '#ffffff', tagBg: '#000000', tagText: '#ffffff' }; // Ember
+      case 'Number':
+        return { bg: '#55db9c', text: '#000000', tagBg: '#ffffff', tagText: '#000000' }; // Mint Pop
+      case 'Parenthesis':
+        return { bg: '#e9e9e9', text: '#000000', tagBg: '#ffffff', tagText: '#000000' }; // Soft Mist
+      default:
+        return { bg: '#ffffff', text: '#000000', tagBg: '#cccccc', tagText: '#000000' };
+    }
+  };
+
+  const colors = getNodeColor();
+
+  // Active or error sticker styling
+  const getOutlineStyle = () => {
+    if (status === 'error') {
+      return {
+        boxShadow: '0 0 0 4px #fb4903, 0 0 0 6px #000000',
+        transform: 'scale(1.08)'
+      };
+    }
+    if (isCurrent) {
+      return {
+        boxShadow: '0 0 0 4px #ffd731, 0 0 0 6px #000000',
+        transform: 'scale(1.10)'
+      };
+    }
+    return {
+      boxShadow: 'none',
+      transform: 'scale(1)'
+    };
+  };
+
+  const outline = getOutlineStyle();
+
   return (
     <div
-      className={isCurrent ? 'active-pulse' : ''}
       style={{
-        minWidth: '68px',
-        padding: '6px 12px',
-        borderRadius: '12px',
-        border: '2px solid',
+        minWidth: '76px',
+        padding: '7px 14px',
+        borderRadius: nodeType === 'Operator' ? '1600px' : '20px', // Lexipit pill or soft card
+        border: '2px solid #000000', // Hand-cut black sticker outline
+        backgroundColor: colors.bg,
+        color: colors.text,
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'center',
         justifyContent: 'center',
-        transition: 'all 0.25s ease-in-out',
-        background: status === 'error' ? '#fef2f2' : isCurrent ? '#fffbeb' : '#ffffff',
-        borderColor: status === 'error' ? '#ef4444' : isCurrent ? '#f59e0b' : status === 'completed' ? '#10b981' : '#cbd5e1',
-        boxShadow: isCurrent ? '0 4px 12px rgba(245, 158, 11, 0.35)' : '0 2px 5px rgba(0,0,0,0.06)',
-        transform: isCurrent ? 'scale(1.08)' : 'scale(1)'
+        transition: 'transform 0.2s ease, box-shadow 0.2s ease',
+        userSelect: 'none',
+        ...outline
       }}
     >
       <Handle
         type="target"
         position={Position.Top}
-        style={{ background: '#94a3b8', width: 8, height: 8 }}
+        style={{
+          background: '#000000',
+          width: 8,
+          height: 8,
+          border: '1px solid #ffffff'
+        }}
       />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
         <span
           style={{
-            fontSize: '15px',
-            fontWeight: 700,
-            color: nodeType === 'Number' ? '#047857' : nodeType === 'Operator' ? '#be123c' : '#0f172a'
+            fontSize: '17px',
+            fontWeight: 900,
+            letterSpacing: '-0.02em',
+            lineHeight: 1.1
           }}
         >
           {label}
         </span>
+
+        {/* Lexipit Non-Terminal Badge */}
         <span
           style={{
-            fontSize: '10px',
-            padding: '2px 5px',
-            borderRadius: '6px',
-            backgroundColor:
-              nodeType === 'Expression' ? '#dbeafe' :
-              nodeType === 'Term' ? '#f3e8ff' :
-              nodeType === 'Factor' ? '#fef3c7' :
-              nodeType === 'Operator' ? '#ffe4e6' : '#d1fae5',
-            color:
-              nodeType === 'Expression' ? '#1e40af' :
-              nodeType === 'Term' ? '#6b21a8' :
-              nodeType === 'Factor' ? '#92400e' :
-              nodeType === 'Operator' ? '#9f1239' : '#065f46',
-            fontWeight: 700
+            fontSize: '11px',
+            fontWeight: 800,
+            padding: '2px 6px',
+            borderRadius: '1600px',
+            border: '1px solid #000000',
+            backgroundColor: colors.tagBg,
+            color: colors.tagText,
+            letterSpacing: '0.02em',
+            textTransform: 'uppercase'
           }}
         >
-          {nodeType.substring(0, 3)}
+          {nodeType === 'Expression' ? 'E' :
+           nodeType === 'Term' ? 'T' :
+           nodeType === 'Factor' ? 'F' :
+           nodeType === 'Operator' ? 'OP' : 'ID'}
         </span>
       </div>
 
+      {/* Evaluated Value Sticker Tag */}
       {value !== undefined && value !== null && (
         <div
           style={{
-            marginTop: '4px',
-            fontSize: '12px',
-            fontWeight: 700,
-            color: '#047857',
-            backgroundColor: '#ecfdf5',
-            padding: '2px 6px',
-            borderRadius: '4px',
-            border: '1px solid #a7f3d0'
+            marginTop: '5px',
+            fontSize: '13px',
+            fontWeight: 800,
+            color: '#000000',
+            backgroundColor: '#ffffff',
+            padding: '2px 8px',
+            borderRadius: '1600px',
+            border: '1.5px solid #000000',
+            letterSpacing: '-0.01em'
           }}
         >
           = {value}
@@ -86,7 +137,12 @@ export const CustomNodeComponent: React.FC<CustomNodeProps> = ({ data }) => {
       <Handle
         type="source"
         position={Position.Bottom}
-        style={{ background: '#94a3b8', width: 8, height: 8 }}
+        style={{
+          background: '#000000',
+          width: 8,
+          height: 8,
+          border: '1px solid #ffffff'
+        }}
       />
     </div>
   );
