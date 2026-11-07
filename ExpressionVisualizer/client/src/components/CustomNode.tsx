@@ -6,14 +6,15 @@ interface CustomNodeProps {
   data: FlowNodeData;
 }
 
-export const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
+export const CustomNodeComponent: React.FC<CustomNodeProps> = ({ data }) => {
   const { label, nodeType, value, status, isCurrent } = data;
 
   return (
     <div
+      className={isCurrent ? 'active-pulse' : ''}
       style={{
         minWidth: '68px',
-        padding: '6px 10px',
+        padding: '6px 12px',
         borderRadius: '12px',
         border: '2px solid',
         display: 'flex',
@@ -23,7 +24,7 @@ export const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
         transition: 'all 0.25s ease-in-out',
         background: status === 'error' ? '#fef2f2' : isCurrent ? '#fffbeb' : '#ffffff',
         borderColor: status === 'error' ? '#ef4444' : isCurrent ? '#f59e0b' : status === 'completed' ? '#10b981' : '#cbd5e1',
-        boxShadow: isCurrent ? '0 0 16px rgba(245, 158, 11, 0.45)' : '0 2px 5px rgba(0,0,0,0.06)',
+        boxShadow: isCurrent ? '0 4px 12px rgba(245, 158, 11, 0.35)' : '0 2px 5px rgba(0,0,0,0.06)',
         transform: isCurrent ? 'scale(1.08)' : 'scale(1)'
       }}
     >
@@ -33,12 +34,12 @@ export const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
         style={{ background: '#94a3b8', width: 8, height: 8 }}
       />
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
         <span
           style={{
             fontSize: '15px',
             fontWeight: 700,
-            color: nodeType === 'Number' ? '#047857' : nodeType === 'Operator' ? '#be123c' : '#1e293b'
+            color: nodeType === 'Number' ? '#047857' : nodeType === 'Operator' ? '#be123c' : '#0f172a'
           }}
         >
           {label}
@@ -46,7 +47,7 @@ export const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
         <span
           style={{
             fontSize: '10px',
-            padding: '1px 5px',
+            padding: '2px 5px',
             borderRadius: '6px',
             backgroundColor:
               nodeType === 'Expression' ? '#dbeafe' :
@@ -58,7 +59,7 @@ export const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
               nodeType === 'Term' ? '#6b21a8' :
               nodeType === 'Factor' ? '#92400e' :
               nodeType === 'Operator' ? '#9f1239' : '#065f46',
-            fontWeight: 600
+            fontWeight: 700
           }}
         >
           {nodeType.substring(0, 3)}
@@ -71,7 +72,7 @@ export const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
             marginTop: '4px',
             fontSize: '12px',
             fontWeight: 700,
-            color: '#059669',
+            color: '#047857',
             backgroundColor: '#ecfdf5',
             padding: '2px 6px',
             borderRadius: '4px',
@@ -90,3 +91,5 @@ export const CustomNode: React.FC<CustomNodeProps> = ({ data }) => {
     </div>
   );
 };
+
+export const CustomNode = React.memo(CustomNodeComponent);

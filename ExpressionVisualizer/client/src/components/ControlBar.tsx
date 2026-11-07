@@ -39,15 +39,23 @@ export const ControlBar: React.FC<ControlBarProps> = ({
       {/* Top Input Row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
         {/* Algorithm Selector */}
-        <div style={{
-          display: 'flex',
-          backgroundColor: '#f1f5f9',
-          borderRadius: '8px',
-          padding: '3px',
-          border: '1px solid #cbd5e1'
-        }}>
+        <div
+          role="radiogroup"
+          aria-label="Chọn giải thuật phân giải cú pháp"
+          style={{
+            display: 'flex',
+            backgroundColor: '#f1f5f9',
+            borderRadius: '8px',
+            padding: '3px',
+            border: '1px solid #cbd5e1'
+          }}
+        >
           <button
+            type="button"
+            role="radio"
+            aria-checked={algorithm === 'v1'}
             onClick={() => setAlgorithm('v1')}
+            title="Văn phạm Session 5: E -> T + E | T, T -> F * T | F (kết hợp phải)"
             style={{
               padding: '8px 14px',
               borderRadius: '6px',
@@ -63,7 +71,11 @@ export const ControlBar: React.FC<ControlBarProps> = ({
             Giải thuật I (Slide: +, *)
           </button>
           <button
+            type="button"
+            role="radio"
+            aria-checked={algorithm === 'v2'}
             onClick={() => setAlgorithm('v2')}
+            title="Giải thuật nâng cao: Hỗ trợ +, -, *, / theo quy tắc kết hợp trái chuẩn toán học"
             style={{
               padding: '8px 14px',
               borderRadius: '6px',
@@ -80,16 +92,33 @@ export const ControlBar: React.FC<ControlBarProps> = ({
           </button>
         </div>
 
-        {/* Expression Input */}
-        <div style={{ flex: '1 1 300px', display: 'flex', position: 'relative' }}>
+        {/* Expression Input with Accessible Label */}
+        <div style={{ flex: '1 1 300px', display: 'flex', flexDirection: 'column', position: 'relative' }}>
+          <label htmlFor="expression-input" style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0
+          }}>
+            Biểu thức số học cần phân giải
+          </label>
           <input
+            id="expression-input"
             type="text"
             value={expression}
             onChange={(e) => setExpression(e.target.value)}
             onKeyDown={(e) => {
               if (e.key === 'Enter') onParse();
             }}
-            placeholder="Nhập biểu thức số học (ví dụ: 2 * 3 + 6)..."
+            aria-label="Nhập biểu thức số học"
+            aria-invalid={!!error}
+            aria-describedby={error ? "expression-error-msg" : "expression-hint"}
+            placeholder="Ví dụ: 2 * 3 + 6 hoặc (2 + 3) * 4"
             style={{
               width: '100%',
               padding: '10px 14px',
@@ -101,12 +130,27 @@ export const ControlBar: React.FC<ControlBarProps> = ({
               boxShadow: '0 1px 2px rgba(0,0,0,0.05)'
             }}
           />
+          <span id="expression-hint" style={{
+            position: 'absolute',
+            width: '1px',
+            height: '1px',
+            padding: 0,
+            margin: '-1px',
+            overflow: 'hidden',
+            clip: 'rect(0, 0, 0, 0)',
+            whiteSpace: 'nowrap',
+            border: 0
+          }}>
+            Nhấn Enter hoặc nút Phân tích để bắt đầu chạy giải thuật
+          </span>
         </div>
 
-        {/* Submit Button */}
+        {/* Submit Action Button */}
         <button
+          type="button"
           onClick={onParse}
           disabled={loading || !expression.trim()}
+          aria-label={loading ? "Đang xử lý phân giải cú pháp..." : "Bắt đầu phân tích cú pháp biểu thức"}
           style={{
             display: 'flex',
             alignItems: 'center',
@@ -124,56 +168,63 @@ export const ControlBar: React.FC<ControlBarProps> = ({
           }}
         >
           <Play size={16} />
-          {loading ? 'Đang phân tích...' : 'Phân tích (Parse)'}
+          {loading ? 'Đang phân tích...' : 'Phân tích cú pháp'}
         </button>
 
         {/* Result Badge */}
         {result !== undefined && result !== null && !error && (
-          <div style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '8px',
-            padding: '8px 16px',
-            backgroundColor: '#ecfdf5',
-            border: '1px solid #6ee7b7',
-            borderRadius: '8px',
-            color: '#065f46',
-            fontWeight: 700,
-            fontSize: '15px'
-          }}>
-            <span>Kết quả:</span>
+          <div
+            role="status"
+            aria-live="polite"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '8px 16px',
+              backgroundColor: '#ecfdf5',
+              border: '1px solid #6ee7b7',
+              borderRadius: '8px',
+              color: '#065f46',
+              fontWeight: 700,
+              fontSize: '15px'
+            }}
+          >
+            <span>Giá trị biểu thức:</span>
             <span style={{ fontSize: '18px', color: '#047857' }}>{result}</span>
           </div>
         )}
       </div>
 
-      {/* Examples Chips */}
+      {/* Examples Chips with Clear Context */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-        <span style={{ fontSize: '13px', color: '#64748b', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
-          <Sparkles size={14} color="#f59e0b" /> Ví dụ mẫu:
+        <span style={{ fontSize: '13px', color: '#475569', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <Sparkles size={14} color="#d97706" /> Thử nhanh với biểu thức mẫu:
         </span>
         {examples.map((ex, idx) => (
           <button
             key={idx}
+            type="button"
             onClick={() => onSelectExample(ex)}
+            title={`${ex.title}: ${ex.description}`}
+            aria-label={`Chọn biểu thức mẫu: ${ex.expression}`}
             style={{
-              padding: '4px 10px',
-              fontSize: '12px',
+              padding: '5px 12px',
+              fontSize: '13px',
               fontFamily: 'monospace',
               backgroundColor: '#f8fafc',
-              border: '1px solid #e2e8f0',
+              border: '1px solid #cbd5e1',
               borderRadius: '6px',
               cursor: 'pointer',
-              color: '#334155',
+              color: '#1e293b',
               transition: 'all 0.15s'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.backgroundColor = '#e0f2fe';
-              e.currentTarget.style.borderColor = '#7dd3fc';
+              e.currentTarget.style.borderColor = '#38bdf8';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.backgroundColor = '#f8fafc';
-              e.currentTarget.style.borderColor = '#e2e8f0';
+              e.currentTarget.style.borderColor = '#cbd5e1';
             }}
           >
             {ex.expression}
@@ -181,21 +232,31 @@ export const ControlBar: React.FC<ControlBarProps> = ({
         ))}
       </div>
 
-      {/* Error alert if any */}
+      {/* Actionable Error Alert */}
       {error && (
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: '8px',
-          padding: '10px 14px',
-          backgroundColor: '#fef2f2',
-          border: '1px solid #fecaca',
-          borderRadius: '8px',
-          color: '#b91c1c',
-          fontSize: '14px'
-        }}>
-          <AlertCircle size={18} />
-          <span>{error}</span>
+        <div
+          id="expression-error-msg"
+          role="alert"
+          style={{
+            display: 'flex',
+            alignItems: 'flex-start',
+            gap: '10px',
+            padding: '12px 16px',
+            backgroundColor: '#fef2f2',
+            border: '1px solid #fecaca',
+            borderRadius: '8px',
+            color: '#991b1b',
+            fontSize: '14px',
+            lineHeight: '1.4'
+          }}
+        >
+          <AlertCircle size={20} style={{ flexShrink: 0, marginTop: '1px' }} />
+          <div>
+            <strong>Phát hiện lỗi cú pháp:</strong> {error}
+            <div style={{ fontSize: '12px', color: '#b91c1c', marginTop: '4px' }}>
+              Gợi ý khắc phục: Hãy kiểm tra các cặp ngoặc tròn ( ), tránh viết hai toán tử liền nhau hoặc nhập ký tự lạ.
+            </div>
+          </div>
         </div>
       )}
     </div>

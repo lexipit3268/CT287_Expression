@@ -8,6 +8,7 @@ import {
   useEdgesState
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
+import { PanelRightClose, PanelRightOpen, Keyboard } from 'lucide-react';
 
 import { Header } from './components/Header';
 import { ControlBar } from './components/ControlBar';
@@ -28,6 +29,9 @@ export const App: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [examples, setExamples] = useState<ExampleExpression[]>([]);
   const [parseResponse, setParseResponse] = useState<ParseResponse | null>(null);
+
+  // Inspector panel collapse state
+  const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(true);
 
   // Trace player state
   const [currentStepIndex, setCurrentStepIndex] = useState<number>(0);
@@ -80,6 +84,44 @@ export const App: React.FC = () => {
   useEffect(() => {
     handleParse();
   }, []);
+
+  // Keyboard navigation shortcuts
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      if (e.code === 'Space') {
+        e.preventDefault();
+        setIsPlaying((prev) => !prev);
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setIsPlaying(false);
+        if (parseResponse) {
+          setCurrentStepIndex((prev) => Math.min(parseResponse.totalSteps - 1, prev + 1));
+        }
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setIsPlaying(false);
+        setCurrentStepIndex((prev) => Math.max(0, prev - 1));
+      } else if (e.key === 'Home') {
+        e.preventDefault();
+        setIsPlaying(false);
+        setCurrentStepIndex(0);
+      } else if (e.key === 'End') {
+        e.preventDefault();
+        setIsPlaying(false);
+        if (parseResponse) {
+          setCurrentStepIndex(parseResponse.totalSteps - 1);
+        }
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [parseResponse]);
 
   // Update Graph when step changes
   useEffect(() => {
@@ -173,7 +215,7 @@ export const App: React.FC = () => {
       {/* 3. Main Workspace: Canvas + Inspector */}
       <div style={{ display: 'flex', flex: '1', overflow: 'hidden', position: 'relative' }}>
         {/* React Flow Canvas */}
-        <div style={{ flex: '1', height: '100%', backgroundColor: '#f1f5f9' }}>
+        <main style={{ flex: '1', height: '100%', backgroundColor: '#f1f5f9', position: 'relative' }}>
           <ReactFlow
             nodes={nodes}
             edges={edges}
@@ -195,13 +237,67 @@ export const App: React.FC = () => {
               style={{ borderRadius: '8px', border: '1px solid #cbd5e1' }}
             />
           </ReactFlow>
-        </div>
 
-        {/* Right Inspector Panel */}
-        <InspectorPanel
-          expression={parseResponse?.cleanExpression || expression}
-          step={currentStep}
-        />
+          {/* Quick Shortcuts Pill */}
+          <div style={{
+            position: 'absolute',
+            bottom: '12px',
+            left: '12px',
+            backgroundColor: 'rgba(255, 255, 255, 0.88)',
+            backdropFilter: 'blur(6px)',
+            border: '1px solid #cbd5e1',
+            borderRadius: '20px',
+            padding: '5px 12px',
+            fontSize: '11px',
+            fontWeight: 500,
+            color: '#475569',
+            display: 'flex',
+            alignItems: 'center',
+            gap: '6px',
+            boxShadow: '0 2px 6px rgba(0,0,0,0.05)',
+            pointerEvents: 'none'
+          }}>
+            <Keyboard size={13} color="#2563eb" />
+            <span>Phím tắt: <strong>Space</strong> (Chạy/Dừng), <strong>← / →</strong> (Lùi/Tiến), <strong>Home/End</strong></span>
+          </div>
+
+          {/* Inspector Panel Toggle Button */}
+          <button
+            type="button"
+            onClick={() => setIsInspectorOpen((prev) => !prev)}
+            title={isInspectorOpen ? 'Thu gọn bảng thanh tra' : 'Mở rộng bảng thanh tra'}
+            aria-label={isInspectorOpen ? 'Thu gọn bảng thanh tra' : 'Mở rộng bảng thanh tra'}
+            style={{
+              position: 'absolute',
+              top: '12px',
+              right: '12px',
+              backgroundColor: '#ffffff',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              padding: '8px 12px',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              cursor: 'pointer',
+              fontSize: '12px',
+              fontWeight: 600,
+              color: '#334155',
+              boxShadow: '0 2px 5px rgba(0,0,0,0.06)',
+              zIndex: 10
+            }}
+          >
+            {isInspectorOpen ? <PanelRightClose size={15} /> : <PanelRightOpen size={15} />}
+            <span>{isInspectorOpen ? 'Ẩn bảng chi tiết' : 'Hiện bảng chi tiết'}</span>
+          </button>
+        </main>
+
+        {/* Right Inspector Panel (Collapsible) */}
+        {isInspectorOpen && (
+          <InspectorPanel
+            expression={parseResponse?.cleanExpression || expression}
+            step={currentStep}
+          />
+        )}
       </div>
 
       {/* 4. Bottom Trace Player */}
