@@ -1,3 +1,4 @@
+using ExpressionVisualizer.Core.Pure;
 using ExpressionVisualizer.Models;
 using ExpressionVisualizer.Services;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
@@ -8,11 +9,46 @@ namespace ExpressionVisualizer.Tests;
 public class ExpressionParserTests
 {
     private readonly IParserService _parserService = new ParserService();
+    private readonly Algorithm1 _algo1 = new();
+    private readonly Algorithm2 _algo2 = new();
 
+    // =========================================================================
+    // KIỂM THỬ THUẬT TOÁN I & II THUẦN TÚY (CORE LOGIC ĐỘC LẬP)
+    // =========================================================================
+    [TestMethod]
+    public void TestPureAlgorithm1_Basic()
+    {
+        Assert.AreEqual(12.0, _algo1.Evaluate("2 * 3 + 6"));
+        Assert.AreEqual(20.0, _algo1.Evaluate("(2 + 3) * 4"));
+    }
+
+    [TestMethod]
+    public void TestPureAlgorithm2_LeftAssociativeSubtraction()
+    {
+        // 10 - 4 - 2 = (10 - 4) - 2 = 4 (nếu kết hợp phải sẽ sai thành 8)
+        Assert.AreEqual(4.0, _algo2.Evaluate("10 - 4 - 2"));
+    }
+
+    [TestMethod]
+    public void TestPureAlgorithm2_LeftAssociativeDivision()
+    {
+        // 20 / 4 / 2 = (20 / 4) / 2 = 2.5 (nếu kết hợp phải sẽ sai thành 10)
+        Assert.AreEqual(2.5, _algo2.Evaluate("20 / 4 / 2"));
+    }
+
+    [TestMethod]
+    public void TestPureAlgorithm2_MixedOperatorsAndParentheses()
+    {
+        // (20 + 4) / 3 - 2 * 3 = 24 / 3 - 6 = 8 - 6 = 2
+        Assert.AreEqual(2.0, _algo2.Evaluate("(20 + 4) / 3 - 2 * 3"));
+    }
+
+    // =========================================================================
+    // KIỂM THỬ GRAPH & TRACE VISUALIZER
+    // =========================================================================
     [TestMethod]
     public void TestAlgorithm1_BasicSlideExample_Returns12()
     {
-        // w = 2 * 3 + 6 (Ví dụ trong Session 5 slide)
         var response = _parserService.Parse(new ParseRequest
         {
             Expression = "2 * 3 + 6",
@@ -28,7 +64,6 @@ public class ExpressionParserTests
     [TestMethod]
     public void TestAlgorithm1_WithParentheses_Returns20()
     {
-        // (2 + 3) * 4 = 20
         var response = _parserService.Parse(new ParseRequest
         {
             Expression = "(2 + 3) * 4",
@@ -42,7 +77,6 @@ public class ExpressionParserTests
     [TestMethod]
     public void TestAlgorithm2_LeftAssociativitySubtraction_Returns4()
     {
-        // 10 - 4 - 2 = (10 - 4) - 2 = 4 (Không phải 10 - (4 - 2) = 8)
         var response = _parserService.Parse(new ParseRequest
         {
             Expression = "10 - 4 - 2",
@@ -56,7 +90,6 @@ public class ExpressionParserTests
     [TestMethod]
     public void TestAlgorithm2_LeftAssociativityDivision_Returns2_5()
     {
-        // 20 / 4 / 2 = (20 / 4) / 2 = 5 / 2 = 2.5 (Không phải 20 / (4 / 2) = 10)
         var response = _parserService.Parse(new ParseRequest
         {
             Expression = "20 / 4 / 2",
@@ -70,7 +103,6 @@ public class ExpressionParserTests
     [TestMethod]
     public void TestAlgorithm2_ComplexExpression_Returns2()
     {
-        // (20 + 4) / 3 - 2 * 3 = 24 / 3 - 6 = 8 - 6 = 2
         var response = _parserService.Parse(new ParseRequest
         {
             Expression = "(20 + 4) / 3 - 2 * 3",

@@ -234,6 +234,10 @@ Với biểu thức $w = 2 * 3 + 6$:
 Buoi 4/
 │
 ├── ExpressionVisualizer/                 # DỰ ÁN CHÍNH (ASP.NET CORE + REACT HOST)
+│   ├── Core/                            # THUẬT TOÁN THUẦN TÚY (ĐỘC LẬP HOÀN TOÀN KHỎI GRAPH/UI)
+│   │   └── Pure/
+│   │       ├── Algorithm1.cs            # Thuật toán I thuần túy (+, *, đệ quy phải)
+│   │       └── Algorithm2.cs            # Thuật toán II thuần túy (+, -, *, /, vòng lặp kết hợp trái)
 │   ├── Controllers/
 │   │   └── ParserController.cs          # REST API Controllers (nhận chuỗi, trả JSON)
 │   ├── Models/
@@ -510,7 +514,7 @@ private double ComputeTreeLayout(ASTNode node, double startX, double level, doub
 
 ## 7. KẾT QUẢ THỰC NGHIỆM & KIỂM THỬ ĐƠN VỊ (UNIT TESTS)
 
-Dự án kiểm thử tự động `ExpressionVisualizer.Tests` được xây dựng bằng MSTest, bao phủ đầy đủ các ca kiểm thử:
+Dự án kiểm thử tự động `ExpressionVisualizer.Tests` được xây dựng bằng MSTest, bao phủ đầy đủ 12 ca kiểm thử cho cả tầng Thuật toán thuần túy (Core Pure) và tầng Dịch vụ trực quan hóa (Graph & Trace):
 
 ```powershell
 dotnet test --no-build
@@ -518,18 +522,26 @@ dotnet test --no-build
 
 ### Kết quả chạy kiểm thử:
 ```text
-Passed!  - Failed: 0, Passed: 8, Skipped: 0, Total: 8, Duration: 32 ms - ExpressionVisualizer.Tests.dll (net10.0)
+Passed!  - Failed: 0, Passed: 12, Skipped: 0, Total: 12, Duration: 34 ms - ExpressionVisualizer.Tests.dll (net10.0)
 ```
 
-### Chi tiết 8 Test Cases đã được kiểm chứng:
-1. `TestAlgorithm1_BasicSlideExample_Returns12`: Kiểm thử ví dụ trong slide: $2 * 3 + 6 = 12$.
-2. `TestAlgorithm1_WithParentheses_Returns20`: Kiểm thử độ ưu tiên của dấu ngoặc đơn: $(2 + 3) * 4 = 20$.
-3. `TestAlgorithm2_LeftAssociativitySubtraction_Returns4`: Kiểm chứng tính kết hợp trái phép trừ: $10 - 4 - 2 = (10 - 4) - 2 = 4$ (không bị tính sai thành 8).
-4. `TestAlgorithm2_LeftAssociativityDivision_Returns2_5`: Kiểm chứng tính kết hợp trái phép chia: $20 / 4 / 2 = (20 / 4) / 2 = 2.5$ (không bị tính sai thành 10).
-5. `TestAlgorithm2_ComplexExpression_Returns2`: Biểu thức hỗn hợp cả 4 phép toán: $(20 + 4) / 3 - 2 * 3 = 24 / 3 - 6 = 8 - 6 = 2$.
-6. `TestInvalidSyntax_MissingParenthesis_ReturnsError`: Bắt lỗi thiếu dấu ngoặc đóng: `(2 + 3 * 4`.
-7. `TestAlgorithm2_DivisionByZero_ReturnsError`: Bắt ngoại lệ chia cho 0: `10 / (5 - 5)`.
-8. Kiểm tra tính toàn vẹn của danh sách Node và Snapshot sinh ra cho đồ thị.
+### Chi tiết 12 Test Cases đã được kiểm chứng:
+
+#### A. Nhóm kiểm thử Thuật toán thuần túy (Core Logic độc lập):
+1. `TestPureAlgorithm1_Basic`: Kiểm thử `Algorithm1.cs` với $2 * 3 + 6 = 12$ và $(2 + 3) * 4 = 20$.
+2. `TestPureAlgorithm2_LeftAssociativeSubtraction`: Kiểm chứng `Algorithm2.cs` tính kết hợp trái phép trừ: $10 - 4 - 2 = 4$ (không bị sai thành 8).
+3. `TestPureAlgorithm2_LeftAssociativeDivision`: Kiểm chứng `Algorithm2.cs` tính kết hợp trái phép chia: $20 / 4 / 2 = 2.5$ (không bị sai thành 10).
+4. `TestPureAlgorithm2_MixedOperatorsAndParentheses`: Biểu thức hỗn hợp cả 4 toán tử: $(20 + 4) / 3 - 2 * 3 = 2$.
+
+#### B. Nhóm kiểm thử Graph & Trace Visualizer:
+5. `TestAlgorithm1_BasicSlideExample_Returns12`: Kiểm thử ví dụ trong slide: $2 * 3 + 6 = 12$.
+6. `TestAlgorithm1_WithParentheses_Returns20`: Kiểm thử độ ưu tiên của dấu ngoặc đơn: $(2 + 3) * 4 = 20$.
+7. `TestAlgorithm2_LeftAssociativitySubtraction_Returns4`: Kiểm chứng tính kết hợp trái phép trừ trên đồ thị: $10 - 4 - 2 = 4$.
+8. `TestAlgorithm2_LeftAssociativityDivision_Returns2_5`: Kiểm chứng tính kết hợp trái phép chia trên đồ thị: $20 / 4 / 2 = 2.5$.
+9. `TestAlgorithm2_ComplexExpression_Returns2`: Biểu thức hỗn hợp cả 4 phép toán: $(20 + 4) / 3 - 2 * 3 = 2$.
+10. `TestInvalidSyntax_MissingParenthesis_ReturnsError`: Bắt lỗi thiếu dấu ngoặc đóng: `(2 + 3 * 4`.
+11. `TestAlgorithm2_DivisionByZero_ReturnsError`: Bắt ngoại lệ chia cho 0: `10 / (5 - 5)`.
+12. `TestAlgorithm1_GraphNodesAndStepsGenerated`: Kiểm tra tính toàn vẹn của danh sách Node và Snapshot sinh ra cho đồ thị.
 
 ---
 
