@@ -35,11 +35,16 @@ export interface FlowEdge {
   animated?: boolean;
 }
 
+export type AlgorithmMode = 'auto' | 'v1' | 'v2';
+
 export interface ParseResponse {
   success: boolean;
   result?: number | null;
   errorMessage?: string;
   cleanExpression: string;
+  selectedAlgorithm: 'v1' | 'v2';
+  autoDetected: boolean;
+  detectionMessage?: string | null;
   nodes: FlowNode[];
   edges: FlowEdge[];
   steps: TraceStep[];

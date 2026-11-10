@@ -112,3 +112,18 @@ html, body, #root {
 .active-pulse {
   animation: lexipitActiveSticker 1.4s infinite ease-in-out;
 }
+
+@keyframes lexipitAlertPop {
+  0% {
+    opacity: 0;
+    transform: translateY(-6px) scale(0.98);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.lexipit-alert-pop {
+  animation: lexipitAlertPop 0.22s cubic-bezier(0.2, 0.9, 0.3, 1.1) forwards;
+}

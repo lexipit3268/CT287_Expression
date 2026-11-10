@@ -22,17 +22,53 @@ public class ParserService : IParserService
         }
 
         var recorder = new TraceRecorder();
+        bool isAuto = string.IsNullOrWhiteSpace(request.Algorithm) ||
+                      request.Algorithm.Equals("auto", StringComparison.OrdinalIgnoreCase);
 
-        if (request.Algorithm.Equals("v2", StringComparison.OrdinalIgnoreCase))
+        string targetAlgorithm;
+        string? detectionMessage = null;
+
+        if (isAuto)
+        {
+            (targetAlgorithm, detectionMessage) = DetectAlgorithm(request.Expression);
+        }
+        else
+        {
+            targetAlgorithm = request.Algorithm.Equals("v2", StringComparison.OrdinalIgnoreCase) ? "v2" : "v1";
+        }
+
+        ParseResponse response;
+        if (targetAlgorithm == "v2")
         {
             var parserV2 = new GrammarV2ParserService(recorder);
-            return parserV2.Parse(request.Expression);
+            response = parserV2.Parse(request.Expression);
         }
         else
         {
             var parserV1 = new GrammarV1ParserService(recorder);
-            return parserV1.Parse(request.Expression);
+            response = parserV1.Parse(request.Expression);
         }
+
+        response.SelectedAlgorithm = targetAlgorithm;
+        response.AutoDetected = isAuto;
+        response.DetectionMessage = detectionMessage;
+        return response;
+    }
+
+    private static (string Algorithm, string Message) DetectAlgorithm(string expression)
+    {
+        bool hasMinus = expression.Contains('-');
+        bool hasDivide = expression.Contains('/');
+
+        if (hasMinus || hasDivide)
+        {
+            string foundOps = (hasMinus && hasDivide)
+                ? "'-' và '/'"
+                : (hasMinus ? "'-'" : "'/'");
+            return ("v2", $"Phát hiện toán tử {foundOps} trong biểu thức → Hệ thống tự động chọn Giải thuật II (+, -, *, / kết hợp trái) để chạy.");
+        }
+
+        return ("v1", "Biểu thức chỉ dùng phép '+' / '*' (hoặc ngoặc) → Hệ thống tự động chọn Giải thuật I (Văn phạm gốc Session 5) để chạy.");
     }
 
     public List<ExampleExpression> GetExamples()
