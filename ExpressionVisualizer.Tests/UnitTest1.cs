@@ -57,8 +57,8 @@ public class ExpressionParserTests
 
         Assert.IsTrue(response.Success);
         Assert.AreEqual(12.0, response.Result);
-        Assert.IsTrue(response.Steps.Count > 0);
-        Assert.IsTrue(response.Nodes.Count > 0);
+        Assert.IsNotEmpty(response.Steps);
+        Assert.IsNotEmpty(response.Nodes);
     }
 
     [TestMethod]
