@@ -18,6 +18,7 @@
    - 3.1. Thuật toán I: Văn phạm gốc Session 5 (Phép toán `+` và `*`)
    - 3.2. Thuật toán II: Mở rộng 4 phép toán hai ngôi (`+`, `-`, `*`, `/`)
    - 3.3. So sánh cấu trúc cây phân giải giữa Thuật toán I và II
+   - 3.4. Các ví dụ minh họa tiêu biểu (Case Studies)
 4. [CẤU TRÚC DỰ ÁN TỪ ĐẦU ĐẾN CUỐI](#4-cấu-trúc-dự-án-từ-đầu-đến-cuối)
    - 4.1. Sơ đồ cây thư mục hoàn chỉnh
    - 4.2. Bảng kê công nghệ: Đã dùng những gì và dùng ở đâu
@@ -226,6 +227,61 @@ Với biểu thức $w = 2 * 3 + 6$:
 
 ---
 
+### 3.4. Các ví dụ minh họa tiêu biểu (Case Studies)
+
+#### Ví dụ 1: Tác động của độ ưu tiên và dấu ngoặc (`4 - 2 / 2` vs `(4 - 2) / 2`)
+Hai biểu thức có cùng các con số và toán tử nhưng cấu trúc cây phân giải ở gốc hoàn toàn khác nhau theo luật sinh phân tầng của Giải thuật II:
+
+| Biểu thức | Số nút `T` ở gốc `E` | Luồng thực thi & Thứ tự tính | Kết quả |
+|---|---|---|---:|
+| **`4 - 2 / 2`** | **2 nút `T`** (`T=4` và `T=1`) | Phép `-` ở ngoài cùng thuộc tầng `E` nên tách gốc thành `T(4) - T(2/2)`. Nhánh phải `T` tự gom `2 / 2 = 1` trước, sau đó `E` lấy `4 - 1`. | **`3`** |
+| **`(4 - 2) / 2`** | **1 nút `T`** (`T=1`) | Toàn bộ `(4 - 2)` bị đóng gói thành thừa số `F -> ( E )` nằm sâu bên trong `T`. Ngoài ngoặc chỉ còn phép `/` thuộc tầng `T`, nên `E` gốc chỉ có duy nhất 1 nhánh `T` thực hiện `(4-2) / 2`. | **`1`** |
+
+```text
+1) 4 - 2 / 2 (Tách 2 nhánh T tại gốc E)     2) (4 - 2) / 2 (Gom 1 nhánh T tại gốc E)
+               E (= 3)                                       E (= 1)
+             /    |    \                                        |
+         T(=4)   '-'   T(=1)                                 T (= 1)
+           |          /  |  \                             /     |     \
+         F(=4)    F(=2) '/' F(=2)                     F(=2)    '/'   F(=2)
+           |        |         |                      /  |  \           |
+           4        2         2                     (  E(=2) )         2
+                                                      /  |  \
+                                                  T(=4) '-' T(=2)
+                                                    |         |
+                                                    4         2
+```
+
+#### Ví dụ 2: Xử lý tính kết hợp trái với chuỗi phép trừ & chia (`10 - 4 - 2` và `20 / 4 / 2`)
+Để tránh lỗi tính nhầm sang kết hợp phải, vòng lặp `while` trong `CheckExpression()` và `CheckTerm()` luôn giữ nút cha cố định và tích lũy tuần tự từ trái sang phải:
+
+* **Chuỗi phép trừ `10 - 4 - 2`:**
+  * Cây sinh ra tại `E`: `[ T(=10), '-', T(=4), '-', T(=2) ]`.
+  * Bước 1: `accumulatedValue = 10` $\rightarrow$ Bước 2: `10 - 4 = 6` $\rightarrow$ Bước 3: `6 - 2 = 4`.
+  * *(Nếu dùng đệ quy phải như Thuật toán I sẽ tính sai thành `10 - (4 - 2) = 8`).*
+* **Chuỗi phép chia `20 / 4 / 2`:**
+  * Cây sinh ra tại `T`: `[ F(=20), '/', F(=4), '/', F(=2) ]`.
+  * Bước 1: `accumulatedValue = 20` $\rightarrow$ Bước 2: `20 / 4 = 5` $\rightarrow$ Bước 3: `5 / 2 = 2.5`.
+  * *(Nếu dùng đệ quy phải sẽ tính sai thành `20 / (4 / 2) = 10`).*
+
+```text
+   10 - 4 - 2 (Cây phẳng kết hợp trái tại E)      20 / 4 / 2 (Cây phẳng kết hợp trái tại T)
+                   E (= 4)                                         E (= 2.5)
+       /      |       |       |      \                                 |
+   T(=10)    '-'    T(=4)    '-'    T(=2)                          T (= 2.5)
+     |                |               |                /      |       |       |      \
+     10               4               2            F(=20)    '/'    F(=4)    '/'    F(=2)
+                                                     |                |               |
+                                                     20               4               2
+```
+
+#### Ví dụ 3: Tự động nhận diện giải thuật (`Auto Mode`) và Biểu thức hỗn hợp
+Khi người dùng chọn nút **TỰ ĐỘNG** trên thanh công cụ:
+* Nhập `2 * 3 + 6` hoặc `(2 + 3) * 4`: Không có `'-'` hay `'/'` $\rightarrow$ Hệ thống cảnh báo (Alert) chọn **Giải thuật I** (hiển thị cây đệ quy phải chuẩn Session 5).
+* Nhập `(20 + 4) / 3 - 2 * 3`: Phát hiện cả `'/'` và `'-'` $\rightarrow$ Hệ thống cảnh báo (Alert) chọn **Giải thuật II**, tính `(20 + 4) = 24` $\rightarrow$ `24 / 3 = 8` $\rightarrow$ `2 * 3 = 6` $\rightarrow$ `8 - 6 = 2`.
+
+---
+
 ## 4. CẤU TRÚC DỰ ÁN TỪ ĐẦU ĐẾN CUỐI
 
 ### 4.1. Sơ đồ cây thư mục hoàn chỉnh
@@ -310,7 +366,7 @@ Mã nguồn C# được tách biệt rành mạch thành 3 tầng:
 ### 5.2. Mẫu thiết kế Facade (Facade Pattern)
 Lớp `ParserService` đóng vai trò là một **Facade**:
 * Nó cung cấp một điểm tiếp xúc duy nhất `Parse(ParseRequest request)` cho Controller.
-* Phía sau hậu trường, `ParserService` tự động khởi tạo bộ ghi vết `TraceRecorder`, kiểm tra loại giải thuật được chọn (`v1` hay `v2`) để ủy quyền (*dispatch*) cho parser tương ứng xử lý, giúp mã lệnh Controller vô cùng ngắn gọn và dễ bảo trì.
+* Phía sau hậu trường, `ParserService` tự động khởi tạo bộ ghi vết `TraceRecorder`, hỗ trợ cả chế độ chọn thủ công (`v1`, `v2`) lẫn chế độ nhận diện tự động (`auto` qua hàm `DetectAlgorithm`) để ủy quyền (*dispatch*) cho parser tương ứng xử lý, giúp mã lệnh Controller vô cùng ngắn gọn và dễ bảo trì.
 
 ### 5.3. Mẫu thiết kế Ghi vết trạng thái (State Snapshot / Event Recorder Pattern)
 Để Frontend có thể tua lại (*playback*) quá trình đệ quy từng bước một cách tự nhiên mà không cần phải can thiệp chặn luồng đệ quy backend bằng Thread Sleep hay WebSocket phức tạp:
@@ -514,18 +570,18 @@ private double ComputeTreeLayout(ASTNode node, double startX, double level, doub
 
 ## 7. KẾT QUẢ THỰC NGHIỆM & KIỂM THỬ ĐƠN VỊ (UNIT TESTS)
 
-Dự án kiểm thử tự động `ExpressionVisualizer.Tests` được xây dựng bằng MSTest, bao phủ đầy đủ 12 ca kiểm thử cho cả tầng Thuật toán thuần túy (Core Pure) và tầng Dịch vụ trực quan hóa (Graph & Trace):
+Dự án kiểm thử tự động `ExpressionVisualizer.Tests` được xây dựng bằng MSTest, bao phủ đầy đủ 15 ca kiểm thử cho tầng Thuật toán thuần túy (Core Pure), tầng Dịch vụ trực quan hóa (Graph & Trace), và cơ chế Tự động phát hiện giải thuật (Auto Mode):
 
 ```powershell
-dotnet test --no-build
+dotnet test --no-build -c Release
 ```
 
 ### Kết quả chạy kiểm thử:
 ```text
-Passed!  - Failed: 0, Passed: 12, Skipped: 0, Total: 12, Duration: 34 ms - ExpressionVisualizer.Tests.dll (net10.0)
+Passed!  - Failed: 0, Passed: 15, Skipped: 0, Total: 15, Duration: 140 ms - ExpressionVisualizer.Tests.dll (net10.0)
 ```
 
-### Chi tiết 12 Test Cases đã được kiểm chứng:
+### Chi tiết 15 Test Cases đã được kiểm chứng:
 
 #### A. Nhóm kiểm thử Thuật toán thuần túy (Core Logic độc lập):
 1. `TestPureAlgorithm1_Basic`: Kiểm thử `Algorithm1.cs` với $2 * 3 + 6 = 12$ và $(2 + 3) * 4 = 20$.
@@ -542,6 +598,11 @@ Passed!  - Failed: 0, Passed: 12, Skipped: 0, Total: 12, Duration: 34 ms - Expre
 10. `TestInvalidSyntax_MissingParenthesis_ReturnsError`: Bắt lỗi thiếu dấu ngoặc đóng: `(2 + 3 * 4`.
 11. `TestAlgorithm2_DivisionByZero_ReturnsError`: Bắt ngoại lệ chia cho 0: `10 / (5 - 5)`.
 12. `TestAlgorithm1_GraphNodesAndStepsGenerated`: Kiểm tra tính toàn vẹn của danh sách Node và Snapshot sinh ra cho đồ thị.
+
+#### C. Nhóm kiểm thử Tự động phát hiện giải thuật (`auto`):
+13. `TestAutoDetect_PlusAndMultiply_SelectsAlgorithm1`: Biểu thức `2 * 3 + 6` tự động chọn `v1` (`Result = 12`).
+14. `TestAutoDetect_Subtraction_SelectsAlgorithm2`: Biểu thức `10 - 4 - 2` phát hiện `'-'`, tự động chọn `v2` (`Result = 4`).
+15. `TestAutoDetect_Division_SelectsAlgorithm2`: Biểu thức `20 / 4 / 2` phát hiện `'/'`, tự động chọn `v2` (`Result = 2.5`).
 
 ---
 

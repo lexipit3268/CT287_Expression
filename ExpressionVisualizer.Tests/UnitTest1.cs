@@ -138,4 +138,54 @@ public class ExpressionParserTests
         Assert.IsFalse(response.Success);
         Assert.IsTrue(response.ErrorMessage?.Contains("chia cho 0") ?? false);
     }
+
+    // =========================================================================
+    // KIỂM THỬ CƠ CHẾ TỰ ĐỘNG PHÁT HIỆN GIẢI THUẬT (AUTO MODE)
+    // =========================================================================
+    [TestMethod]
+    public void TestAutoDetect_PlusAndMultiply_SelectsAlgorithm1()
+    {
+        var response = _parserService.Parse(new ParseRequest
+        {
+            Expression = "2 * 3 + 6",
+            Algorithm = "auto"
+        });
+
+        Assert.IsTrue(response.Success);
+        Assert.IsTrue(response.AutoDetected);
+        Assert.AreEqual("v1", response.SelectedAlgorithm);
+        Assert.IsFalse(string.IsNullOrWhiteSpace(response.DetectionMessage));
+        Assert.AreEqual(12.0, response.Result);
+    }
+
+    [TestMethod]
+    public void TestAutoDetect_Subtraction_SelectsAlgorithm2()
+    {
+        var response = _parserService.Parse(new ParseRequest
+        {
+            Expression = "10 - 4 - 2",
+            Algorithm = "auto"
+        });
+
+        Assert.IsTrue(response.Success);
+        Assert.IsTrue(response.AutoDetected);
+        Assert.AreEqual("v2", response.SelectedAlgorithm);
+        Assert.IsTrue(response.DetectionMessage?.Contains("Giải thuật II") ?? false);
+        Assert.AreEqual(4.0, response.Result);
+    }
+
+    [TestMethod]
+    public void TestAutoDetect_Division_SelectsAlgorithm2()
+    {
+        var response = _parserService.Parse(new ParseRequest
+        {
+            Expression = "20 / 4 / 2",
+            Algorithm = "auto"
+        });
+
+        Assert.IsTrue(response.Success);
+        Assert.IsTrue(response.AutoDetected);
+        Assert.AreEqual("v2", response.SelectedAlgorithm);
+        Assert.AreEqual(2.5, response.Result);
+    }
 }

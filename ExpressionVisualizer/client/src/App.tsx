@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   ReactFlow,
   Background,
@@ -13,12 +13,12 @@ import '@xyflow/react/dist/style.css';
 import { PanelRightClose, PanelRightOpen, Keyboard } from 'lucide-react';
 
 import { Header } from './components/Header';
-import { ControlBar } from './components/ControlBar';
+import { ControlBar, type DetectionAlert } from './components/ControlBar';
 import { TracePlayer } from './components/TracePlayer';
 import { InspectorPanel } from './components/InspectorPanel';
 import { CustomNode } from './components/CustomNode';
 
-import type { ParseResponse, ExampleExpression, FlowNodeData } from './types';
+import type { AlgorithmMode, ParseResponse, ExampleExpression, FlowNodeData } from './types';
 
 const nodeTypes = {
   customNode: CustomNode
@@ -26,11 +26,13 @@ const nodeTypes = {
 
 export const App: React.FC = () => {
   const [expression, setExpression] = useState<string>('2 * 3 + 6');
-  const [algorithm, setAlgorithm] = useState<'v1' | 'v2'>('v1');
+  const [algorithm, setAlgorithm] = useState<AlgorithmMode>('auto');
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+  const [detectionAlert, setDetectionAlert] = useState<DetectionAlert | null>(null);
   const [examples, setExamples] = useState<ExampleExpression[]>([]);
   const [parseResponse, setParseResponse] = useState<ParseResponse | null>(null);
+  const didInitRef = useRef<boolean>(false);
 
   // Inspector panel collapse state
   const [isInspectorOpen, setIsInspectorOpen] = useState<boolean>(true);
@@ -65,24 +67,38 @@ export const App: React.FC = () => {
         setError(data.errorMessage);
       }
 
+      if (data.autoDetected && data.detectionMessage) {
+        setDetectionAlert({
+          algorithm: data.selectedAlgorithm,
+          message: data.detectionMessage,
+          key: Date.now()
+        });
+      } else {
+        setDetectionAlert(null);
+      }
+
       setParseResponse(data);
       setCurrentStepIndex(0);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ C# API';
       setError(msg);
+      setDetectionAlert(null);
     } finally {
       setLoading(false);
     }
   }, [expression, algorithm]);
 
-  // Fetch examples & do initial parse on mount
+  // Fetch examples & do initial parse once on mount
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
     fetch('/api/parser/examples')
       .then((res) => res.json())
       .then((data: ExampleExpression[]) => setExamples(data))
       .catch((err) => console.error('Error fetching examples:', err));
 
-    handleParse('2 * 3 + 6', 'v1');
+    handleParse('2 * 3 + 6', 'auto');
   }, [handleParse]);
 
   // Global Keyboard shortcuts
@@ -189,10 +205,21 @@ export const App: React.FC = () => {
     };
   }, [isPlaying, currentStepIndex, parseResponse, playSpeed]);
 
+  const handleAlgorithmChange = (mode: AlgorithmMode) => {
+    setAlgorithm(mode);
+    if (mode !== 'auto') {
+      setDetectionAlert(null);
+    }
+  };
+
   const handleSelectExample = (ex: ExampleExpression) => {
     setExpression(ex.expression);
-    setAlgorithm(ex.algorithm);
-    handleParse(ex.expression, ex.algorithm);
+    if (algorithm === 'auto') {
+      handleParse(ex.expression, 'auto');
+    } else {
+      setAlgorithm(ex.algorithm);
+      handleParse(ex.expression, ex.algorithm);
+    }
   };
 
   const currentStep = parseResponse?.steps[currentStepIndex];
@@ -214,13 +241,15 @@ export const App: React.FC = () => {
         expression={expression}
         setExpression={setExpression}
         algorithm={algorithm}
-        setAlgorithm={setAlgorithm}
+        setAlgorithm={handleAlgorithmChange}
         onParse={() => handleParse()}
         loading={loading}
         examples={examples}
         onSelectExample={handleSelectExample}
         error={error}
         result={parseResponse?.result}
+        detectionAlert={detectionAlert}
+        onDismissAlert={() => setDetectionAlert(null)}
       />
 
       {/* 3. Main Workspace: Canvas + Inspector */}

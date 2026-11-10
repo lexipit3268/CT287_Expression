@@ -18,7 +18,7 @@ public class TraceStep
 public class ParseRequest
 {
     public string Expression { get; set; } = string.Empty;
-    public string Algorithm { get; set; } = "v1"; // "v1" (PDF Original) or "v2" (+, -, *, / Left-associative)
+    public string Algorithm { get; set; } = "auto"; // "auto", "v1" (PDF Original), or "v2" (+, -, *, / Left-associative)
 }
 
 public class ParseResponse
@@ -27,6 +27,9 @@ public class ParseResponse
     public double? Result { get; set; }
     public string? ErrorMessage { get; set; }
     public string CleanExpression { get; set; } = string.Empty;
+    public string SelectedAlgorithm { get; set; } = "v1"; // "v1" or "v2"
+    public bool AutoDetected { get; set; }
+    public string? DetectionMessage { get; set; }
     public List<FlowNode> Nodes { get; set; } = new();
     public List<FlowEdge> Edges { get; set; } = new();
     public List<TraceStep> Steps { get; set; } = new();

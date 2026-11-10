@@ -1,18 +1,26 @@
 import React from 'react';
-import { Play, Sparkles, AlertCircle } from 'lucide-react';
-import type { ExampleExpression } from '../types';
+import { Play, Sparkles, AlertCircle, Wand2, X } from 'lucide-react';
+import type { AlgorithmMode, ExampleExpression } from '../types';
+
+export interface DetectionAlert {
+  algorithm: 'v1' | 'v2';
+  message: string;
+  key: number;
+}
 
 interface ControlBarProps {
   expression: string;
   setExpression: (val: string) => void;
-  algorithm: 'v1' | 'v2';
-  setAlgorithm: (val: 'v1' | 'v2') => void;
+  algorithm: AlgorithmMode;
+  setAlgorithm: (val: AlgorithmMode) => void;
   onParse: () => void;
   loading: boolean;
   examples: ExampleExpression[];
   onSelectExample: (ex: ExampleExpression) => void;
   error?: string | null;
   result?: number | null;
+  detectionAlert?: DetectionAlert | null;
+  onDismissAlert?: () => void;
 }
 
 export const ControlBar: React.FC<ControlBarProps> = ({
@@ -25,7 +33,9 @@ export const ControlBar: React.FC<ControlBarProps> = ({
   examples,
   onSelectExample,
   error,
-  result
+  result,
+  detectionAlert,
+  onDismissAlert
 }) => {
   return (
     <div style={{
@@ -53,11 +63,36 @@ export const ControlBar: React.FC<ControlBarProps> = ({
           <button
             type="button"
             role="radio"
+            aria-checked={algorithm === 'auto'}
+            onClick={() => setAlgorithm('auto')}
+            title="Tự động kiểm tra biểu thức để chọn Giải thuật I hoặc Giải thuật II"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '5px',
+              padding: '7px 14px',
+              borderRadius: '1600px',
+              border: 'none',
+              cursor: 'pointer',
+              fontWeight: 800,
+              fontSize: '12px',
+              letterSpacing: '0.030em',
+              transition: 'all 0.15s ease',
+              backgroundColor: algorithm === 'auto' ? '#5c4ade' : 'transparent',
+              color: algorithm === 'auto' ? '#ffffff' : '#000000'
+            }}
+          >
+            <Wand2 size={13} />
+            TỰ ĐỘNG
+          </button>
+          <button
+            type="button"
+            role="radio"
             aria-checked={algorithm === 'v1'}
             onClick={() => setAlgorithm('v1')}
             title="Văn phạm Session 5: E -> T + E | T, T -> F * T | F (kết hợp phải)"
             style={{
-              padding: '7px 16px',
+              padding: '7px 14px',
               borderRadius: '1600px',
               border: 'none',
               cursor: 'pointer',
@@ -69,7 +104,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
               color: algorithm === 'v1' ? '#ffffff' : '#000000'
             }}
           >
-            GIẢI THUẬT I (SLIDE: +, *)
+            GIẢI THUẬT I (+, *)
           </button>
           <button
             type="button"
@@ -78,7 +113,7 @@ export const ControlBar: React.FC<ControlBarProps> = ({
             onClick={() => setAlgorithm('v2')}
             title="Giải thuật nâng cao: Hỗ trợ +, -, *, / theo quy tắc kết hợp trái chuẩn toán học"
             style={{
-              padding: '7px 16px',
+              padding: '7px 14px',
               borderRadius: '1600px',
               border: 'none',
               cursor: 'pointer',
@@ -237,6 +272,76 @@ export const ControlBar: React.FC<ControlBarProps> = ({
           </button>
         ))}
       </div>
+
+      {/* Lexipit Auto-Detection Sticker Alert */}
+      {detectionAlert && (
+        <div
+          key={detectionAlert.key}
+          role="status"
+          aria-live="polite"
+          className="lexipit-alert-pop"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px',
+            padding: '10px 16px',
+            backgroundColor: detectionAlert.algorithm === 'v2' ? '#ffd731' : '#e9ccff', // Sunburst for v2, Lavender for v1
+            border: '2px solid #000000',
+            borderRadius: '20px',
+            color: '#000000',
+            fontSize: '13px',
+            fontWeight: 700,
+            lineHeight: '1.4'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <span
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '5px',
+                padding: '3px 10px',
+                backgroundColor: '#000000',
+                color: '#ffffff',
+                borderRadius: '1600px',
+                fontSize: '11px',
+                fontWeight: 800,
+                letterSpacing: '0.032em',
+                textTransform: 'uppercase'
+              }}
+            >
+              <Wand2 size={12} />
+              TỰ ĐỘNG: {detectionAlert.algorithm === 'v2' ? 'GIẢI THUẬT II' : 'GIẢI THUẬT I'}
+            </span>
+            <span>{detectionAlert.message}</span>
+          </div>
+
+          {onDismissAlert && (
+            <button
+              type="button"
+              onClick={onDismissAlert}
+              aria-label="Đóng thông báo tự động nhận diện"
+              title="Đóng thông báo"
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                width: '26px',
+                height: '26px',
+                borderRadius: '1600px',
+                border: '1.5px solid #000000',
+                backgroundColor: '#ffffff',
+                color: '#000000',
+                cursor: 'pointer',
+                flexShrink: 0
+              }}
+            >
+              <X size={14} />
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Lexipit Ember Error Sticker Alert */}
       {error && (
