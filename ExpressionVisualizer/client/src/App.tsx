@@ -63,10 +63,6 @@ export const App: React.FC = () => {
 
       const data: ParseResponse = await response.json();
 
-      if (!data.success && data.errorMessage) {
-        setError(data.errorMessage);
-      }
-
       if (data.autoDetected && data.detectionMessage) {
         setDetectionAlert({
           algorithm: data.selectedAlgorithm,
@@ -77,12 +73,23 @@ export const App: React.FC = () => {
         setDetectionAlert(null);
       }
 
+      if (!data.success) {
+        setError(data.errorMessage || 'Biểu thức không hợp lệ!');
+        setParseResponse(null);
+        setCurrentStepIndex(0);
+        setIsPlaying(false);
+        return;
+      }
+
       setParseResponse(data);
       setCurrentStepIndex(0);
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Không thể kết nối đến máy chủ C# API';
       setError(msg);
       setDetectionAlert(null);
+      setParseResponse(null);
+      setCurrentStepIndex(0);
+      setIsPlaying(false);
     } finally {
       setLoading(false);
     }
@@ -106,6 +113,10 @@ export const App: React.FC = () => {
     const handleKeyDown = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement;
       if (target.tagName === 'INPUT' || target.tagName === 'SELECT' || target.tagName === 'TEXTAREA') {
+        return;
+      }
+
+      if (!parseResponse?.success || parseResponse.totalSteps <= 0) {
         return;
       }
 
@@ -191,7 +202,7 @@ export const App: React.FC = () => {
   // Auto-play effect
   useEffect(() => {
     let timer: ReturnType<typeof setTimeout> | null = null;
-    if (isPlaying && parseResponse) {
+    if (isPlaying && parseResponse?.success) {
       if (currentStepIndex >= parseResponse.steps.length - 1) {
         setIsPlaying(false);
       } else {
@@ -359,18 +370,20 @@ export const App: React.FC = () => {
       </div>
 
       {/* 4. Bottom Lexipit Trace Player */}
-      <TracePlayer
-        currentStepIndex={currentStepIndex}
-        totalSteps={parseResponse?.totalSteps || 0}
-        isPlaying={isPlaying}
-        onPlayPause={() => setIsPlaying(!isPlaying)}
-        onStepChange={(idx) => {
-          setIsPlaying(false);
-          setCurrentStepIndex(idx);
-        }}
-        playSpeed={playSpeed}
-        setPlaySpeed={setPlaySpeed}
-      />
+      {parseResponse?.success && (
+        <TracePlayer
+          currentStepIndex={currentStepIndex}
+          totalSteps={parseResponse.totalSteps || 0}
+          isPlaying={isPlaying}
+          onPlayPause={() => setIsPlaying((prev) => !prev)}
+          onStepChange={(idx) => {
+            setIsPlaying(false);
+            setCurrentStepIndex(idx);
+          }}
+          playSpeed={playSpeed}
+          setPlaySpeed={setPlaySpeed}
+        />
+      )}
     </div>
   );
 };
