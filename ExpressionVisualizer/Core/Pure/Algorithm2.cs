@@ -91,9 +91,21 @@ public class Algorithm2
         return accumulated;
     }
 
+    // F -> -F | +F | (E) | id
     private double CheckFactor()
     {
         SkipWhitespace();
+
+        if (_currentPos < _input.Length && (_input[_currentPos] == '-' || _input[_currentPos] == '+'))
+        {
+            char unaryOp = _input[_currentPos];
+            _currentPos++;
+            SkipWhitespace();
+
+            double value = CheckFactor();
+            double result = unaryOp == '-' ? -value : value;
+            return result == 0 ? 0 : result;
+        }
 
         if (_currentPos < _input.Length && _input[_currentPos] == '(')
         {

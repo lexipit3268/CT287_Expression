@@ -187,7 +187,7 @@ public class GrammarV2ParserService
         return (tNode, accumulatedValue);
     }
 
-    // F -> (E) | id
+    // F -> -F | +F | (E) | id
     private (ASTNode Node, double Value) CheckFactor()
     {
         _recorder.PushCallStack("checkFactor()");
@@ -196,6 +196,43 @@ public class GrammarV2ParserService
 
         _recorder.RecordStep("CALL", fId, _currentPos, "Vào checkFactor(): Kiểm tra ký tự tại vị trí hiện tại");
         SkipWhitespace();
+
+        if (_currentPos < _input.Length && (_input[_currentPos] == '-' || _input[_currentPos] == '+'))
+        {
+            char unaryOp = _input[_currentPos];
+            int opPos = _currentPos;
+            string opId = _recorder.CreateNode(NodeType.Operator, unaryOp.ToString(), opPos, null);
+            var opNode = new ASTNode
+            {
+                Id = opId,
+                Label = unaryOp.ToString(),
+                Type = NodeType.Operator,
+                Position = opPos,
+                Operator = unaryOp.ToString()
+            };
+            fNode.Children.Add(opNode);
+            _recorder.AddEdge(fId, opId);
+            _recorder.RecordStep("TOKEN", opId, opPos, $"Gặp toán tử một ngôi '{unaryOp}', ghi nhận nút '{unaryOp}' vào cây");
+
+            _currentPos++; // Bỏ qua dấu một ngôi
+            SkipWhitespace();
+
+            _recorder.RecordStep("CALL", fId, _currentPos, $"Đệ quy gọi checkFactor() để phân tích toán hạng cho '{unaryOp}'");
+            var (subFNode, subFValue) = CheckFactor();
+            fNode.Children.Add(subFNode);
+            _recorder.AddEdge(fId, subFNode.Id);
+
+            double result = unaryOp == '-' ? -subFValue : subFValue;
+            if (result == 0) result = 0;
+
+            _recorder.RecordStep("COMPUTE", fId, opPos, $"Áp dụng dấu một ngôi '{unaryOp}': {unaryOp}({subFValue}) = {result}");
+
+            fNode.Value = result;
+            _recorder.SetNodeValue(fId, result);
+            _recorder.RecordStep("RETURN", fId, opPos, $"Hoàn thành checkFactor(), nút F nhận giá trị = {result}");
+            _recorder.PopCallStack();
+            return (fNode, result);
+        }
 
         if (_currentPos < _input.Length && _input[_currentPos] == '(')
         {

@@ -43,6 +43,15 @@ public class ExpressionParserTests
         Assert.AreEqual(2.0, _algo2.Evaluate("(20 + 4) / 3 - 2 * 3"));
     }
 
+    [TestMethod]
+    public void TestPureAlgorithm2_UnaryNegativeNumbers()
+    {
+        Assert.AreEqual(-7.0, _algo2.Evaluate("-4-3"));
+        Assert.AreEqual(-1.0, _algo2.Evaluate("(-4) + 3"));
+        Assert.AreEqual(-10.0, _algo2.Evaluate("5 * -2"));
+        Assert.AreEqual(-5.0, _algo2.Evaluate("-(2 + 3)"));
+    }
+
     // =========================================================================
     // KIỂM THỬ GRAPH & TRACE VISUALIZER
     // =========================================================================
@@ -187,5 +196,22 @@ public class ExpressionParserTests
         Assert.IsTrue(response.AutoDetected);
         Assert.AreEqual("v2", response.SelectedAlgorithm);
         Assert.AreEqual(2.5, response.Result);
+    }
+
+    [TestMethod]
+    public void TestAutoDetect_UnaryNegativeExpression_ReturnsMinus7()
+    {
+        var response = _parserService.Parse(new ParseRequest
+        {
+            Expression = "-4-3",
+            Algorithm = "auto"
+        });
+
+        Assert.IsTrue(response.Success);
+        Assert.IsTrue(response.AutoDetected);
+        Assert.AreEqual("v2", response.SelectedAlgorithm);
+        Assert.AreEqual(-7.0, response.Result);
+        Assert.IsNotEmpty(response.Nodes);
+        Assert.IsNotEmpty(response.Steps);
     }
 }
